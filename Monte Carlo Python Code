@@ -1,9 +1,26 @@
+'''
+What the code does is that it generates a full array of mass and birth (time where the
+star has been created) and then it operates several functions to determine the IMF, SFR
+and time in the main sequence to know if it still a star or if it has evolved to a remnant.
+
+There are several arrays which has the difference of the total length. One type of array has only
+the lenth of the total stellar body where, on the other hand, it has the length of the total
+stars simulated. This is just a method I found appropriate to create a plot with the same x and y
+dimensions.
+
+Steps:
+1) At first it generates a 2D plot to verify the homogeneous sample simulated
+2) Creates plots for IMF and SFT
+3) Creates histograms for final mass of each stellar object and the age in comparison of the Milky Way.
+4) It prints usefull information about the arrays that have been created
+5) It plots the M remnant vs M solar
+'''
+
+
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 import random
 import array as arr
-import sys
 
 '''Functions'''
 
@@ -176,25 +193,28 @@ def plot_2d_histogram(arr_x, arr_y, bins=20, x_label="Array X", y_label="Array Y
     plt.title(title)
     plt.show()
 
+'''This part of the code creates new empty arrays'''
+# Arrays for age
 imf_array = np.empty(0)
 star_array = np.empty(0)
 remnant_array = np.empty(0)
 remnant_array_age = np.empty(0)
+star_array_age = np.empty(0)
+white_array_age = np.empty(0)
+neutron_array_age = np.empty(0)
+black_array_age = np.empty(0)
 
+# Arrays for final mass
 white_array_FM = np.empty(0)
 neutron_array_FM = np.empty(0)
 black_array_FM = np.empty(0)
 
+# Array of final mass but it has the length of the whole set of stars
 star_array_zero = np.empty(0)
 remnant_array_zero = np.empty(0)
 white_array_zero = np.empty(0)
 neutron_array_zero = np.empty(0)
 black_array_zero = np.empty(0)
-
-star_array_age = np.empty(0)
-white_array_age = np.empty(0)
-neutron_array_age = np.empty(0)
-black_array_age = np.empty(0)
 
 j = 4
 # Random mass
@@ -245,12 +265,6 @@ plt.ylabel('SFR')
 plt.ylim(-100,100)
 plt.show()
 
-'''Plotting Stellar Remnant vs Mass'''
-#plt.scatter(np.linspace(0,100,len(remnant_array)), remnant_array, color='m')
-#plt.xlabel('Solar Masses [M]')
-#plt.ylabel('Stellar Remnant [M]')
-#plt.show()
-
 print(f'There are {len(remnant_array)} stellar remnant objects \n Yet there are {len(star_array)} stars')
 
 white_FM, white_age, white_zero = white_dwarf(remnant_array, white_array_FM, remnant_array_age, white_array_age, white_array_zero, remnant_array_zero)
@@ -266,13 +280,6 @@ print(f'The are {(len(star_array)*100)/10**j}% of stars in MS')
 print(f'The are {(len(white_FM)*100)/10**j}% of white dwarfs')
 print(f'The are {(len(neutron_FM)*100)/10**j}% of neutron stars')
 print(f'The are {(len(black_FM)*100)/10**j}% of black holes')
-
-# print(black_zero)
-# print(f'the len of rem is {len(remnant_array)} and for zeros {len(remnant_array_zero)}')
-# print(remnant_array)
-# print('\n')
-# print(remnant_array_zero)
-# print(f'{remnant_array_zero.min()} and {remnant_array_zero.max()}')
 
 # Example arrays to plot
 arrays = {
