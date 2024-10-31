@@ -1,0 +1,309 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import random
+import array as arr
+import sys
+
+'''Functions'''
+
+# IMF Function
+def IMF(alpha, mass):
+    return mass**(-alpha) * np.log(10*mass)
+
+# Time in the main sequence
+def MS(m, birth, star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero):
+    t_MS = 10**(10)/m**(2.5)
+    # Condition for star in MS
+    if birth >= t_MS:
+        star_array = np.append(star_array, m)
+        star_array_age = np.append(star_array_age, birth)
+        remnant_array_age = np.append(remnant_array_age, 0)
+        star_array_zero = np.append(star_array_zero, m)
+        remnant_array_zero = np.append(remnant_array_zero, 0)
+        return star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero
+    # Condition for stellar remnant
+    elif birth < t_MS:
+        remnant_array = np.append(remnant_array, m)
+        remnant_array_age = np.append(remnant_array_age, birth)
+        star_array_age = np.append(star_array_age, 0)
+        star_array_zero = np.append(star_array_zero, 0)
+        remnant_array_zero = np.append(remnant_array_zero, m)
+        return star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero
+
+'''Final Mass Functions'''
+def white_dwarf(remnant_array, white_array_FM, remnant_array_age, white_array_age, white_array_zero, remnant_array_zero):
+    k = 0
+    for rem in remnant_array_zero:
+        if 0 < rem < 8:
+            final_mass = 0.109*rem+0.394
+            white_array_FM = np.append(white_array_FM, final_mass)
+            white_array_age = np.append(white_array_age, remnant_array_age[k])
+            white_array_zero = np.append(white_array_zero, final_mass)
+        else:
+            white_array_zero = np.append(white_array_zero, 0)
+        k+=1
+    return white_array_FM, white_array_age, white_array_zero
+
+def neutron_star(remnant_array, neutron_array_FM, remnant_array_age, neutron_array_age, neutron_array_zero, remnant_array_zero):
+    k = 0
+    for rem in remnant_array_zero:
+        if 9 < rem < 13:
+            final_mass = 2.24+0.508*(rem-14.75)+0.125*(rem-14.75)**2+0.0110*(rem-14.75)**3
+            neutron_array_FM = np.append(neutron_array_FM, final_mass)
+            neutron_array_age = np.append(neutron_array_age, remnant_array_age[k])
+            neutron_array_zero = np.append(neutron_array_zero, final_mass)
+        elif 15 < rem < 17.8:
+            final_mass = 0.996+0.03384*rem
+            neutron_array_FM = np.append(neutron_array_FM, final_mass)
+            neutron_array_age = np.append(neutron_array_age, remnant_array_age[k])
+            neutron_array_zero = np.append(neutron_array_zero, final_mass)
+        elif 17.8 < rem < 18.5:
+            final_mass = -0.020+0.10*rem
+            neutron_array_FM = np.append(neutron_array_FM, final_mass)
+            neutron_array_age = np.append(neutron_array_age, remnant_array_age[k])
+            neutron_array_zero = np.append(neutron_array_zero, final_mass)
+        else:
+            neutron_array_zero = np.append(neutron_array_zero, 0)
+        k+=1
+    return neutron_array_FM, neutron_array_age, neutron_array_zero
+            
+def black_hole(remnant_array, black_array_FM, remnant_array_age, black_array_age, black_array_zero, remnant_array_zero):
+    k = 0
+    for rem in remnant_array_zero:
+        if 20 < rem <= 40:
+            final_mass = -2.049+0.4140*rem
+            black_array_FM = np.append(black_array_FM, final_mass)
+            black_array_age = np.append(black_array_age, remnant_array_age[k])
+            black_array_zero = np.append(black_array_zero, final_mass)
+        elif 45 <= rem <= 100:
+            final_mass = 5.697+7.8598*10**(8)*rem**(-4.858)
+            black_array_FM = np.append(black_array_FM, final_mass)
+            black_array_age = np.append(black_array_age, remnant_array_age[k])
+            black_array_zero = np.append(black_array_zero, final_mass)
+        else:
+            black_array_zero = np.append(black_array_zero, 0)
+        k+=1
+    return black_array_FM, black_array_age, black_array_zero
+
+def normalize_array(arr):
+    """
+    Normalizes a numpy array to have values between 0 and 1.
+    
+    Parameters:
+        arr (numpy array): The input array to normalize.
+        
+    Returns:
+        numpy array: The normalized array with values ranging from 0 to 1.
+    """
+    min_val = np.min(arr)
+    max_val = np.max(arr)
+    return (arr - min_val) / (max_val - min_val) if max_val > min_val else np.zeros_like(arr)
+
+def plot_normalized_histogram_mass(data_dict):
+    """
+    Plots a histogram for multiple normalized arrays with tags.
+    
+    Parameters:
+        data_dict (dict): A dictionary where keys are names (tags) for the arrays,
+                          and values are the numpy arrays to normalize and plot.
+    """
+    # Normalize each array and store with corresponding tag
+    normalized_data = {tag: normalize_array(arr) for tag, arr in data_dict.items()}
+    
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    for idx, (tag, norm_arr) in enumerate(normalized_data.items()):
+        plt.hist(norm_arr, bins=100, alpha=0.4, label=tag)
+
+    plt.xlim(0,1)
+    plt.xlabel("Normalized Final Mass")
+    plt.ylabel("Frequency")
+    #plt.title("Histogram of Normalized Arrays")
+    plt.legend(title="Stellar Body")
+    plt.show()
+
+
+def plot_normalized_histogram_age(data_dict):
+    """
+    Plots a histogram for multiple normalized arrays with tags.
+    
+    Parameters:
+        data_dict (dict): A dictionary where keys are names (tags) for the arrays,
+                          and values are the numpy arrays to normalize and plot.
+    """
+    # Normalize each array and store with corresponding tag
+    normalized_data = {tag: normalize_array(arr) for tag, arr in data_dict.items()}
+    
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    for idx, (tag, norm_arr) in enumerate(normalized_data.items()):
+        plt.hist(norm_arr, bins=100, alpha=0.4, label=tag)
+
+    plt.xlim(0,1)
+    plt.xlabel("Normalized Age")
+    plt.ylabel("Frequency")
+    #plt.title("Histogram of Normalized Arrays")
+    plt.legend(title="Stellar Body")
+    plt.show()
+
+def plot_2d_histogram(arr_x, arr_y, bins=20, x_label="Array X", y_label="Array Y", title="2D Histogram"):
+    """
+    Plots a 2D histogram of two arrays where one array is on the x-axis and the other is on the y-axis.
+    
+    Parameters:
+        arr_x (numpy array): The array for the x-axis.
+        arr_y (numpy array): The array for the y-axis.
+        bins (int or tuple): Number of bins for the histogram, or a tuple specifying bins for x and y.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+        title (str): Title for the plot.
+    """
+    # Normalize both arrays to range between 0 and 1
+    arr_x_normalized = (arr_x - np.min(arr_x)) / (np.max(arr_x) - np.min(arr_x))
+    arr_y_normalized = (arr_y - np.min(arr_y)) / (np.max(arr_y) - np.min(arr_y))
+
+    # Plot 2D histogram
+    plt.figure(figsize=(8, 6))
+    plt.hist2d(arr_x_normalized, arr_y_normalized, bins=bins, cmap="Blues")
+
+    # Add color bar for frequency indication
+    plt.colorbar(label="Frequency")
+
+    # Add labels and title
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.show()
+
+imf_array = np.empty(0)
+star_array = np.empty(0)
+remnant_array = np.empty(0)
+remnant_array_age = np.empty(0)
+
+white_array_FM = np.empty(0)
+neutron_array_FM = np.empty(0)
+black_array_FM = np.empty(0)
+
+star_array_zero = np.empty(0)
+remnant_array_zero = np.empty(0)
+white_array_zero = np.empty(0)
+neutron_array_zero = np.empty(0)
+black_array_zero = np.empty(0)
+
+star_array_age = np.empty(0)
+white_array_age = np.empty(0)
+neutron_array_age = np.empty(0)
+black_array_age = np.empty(0)
+
+j = 4
+# Random mass
+mass = np.random.uniform(0.01, 100, 10**j)
+np.random.shuffle(mass)
+# Random birth
+birth = np.random.uniform(0, 10**10, 10**j)
+np.random.shuffle(birth)
+
+# Plot the 2D histogram to see if is isotropic 
+plot_2d_histogram(mass, birth, bins=30, x_label="Mass", y_label="Age", title="Distribution of Stellar Objects")
+
+i = 0
+while i < len(mass):
+    # Choose an index for IMF due to the mass selection
+    if mass[i] <= 0.08:
+        alpha = 0.3
+    elif 0.08<mass[i]<=0.5:
+        alpha = 1.3
+    elif 0.5<mass[i]:
+        alpha = 2.3
+
+    imf = IMF(alpha, mass[i])
+    imf_array = np.append(imf_array, imf)
+
+    # White dwarfs
+    if mass[i]<8:
+        star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero = MS(mass[i], birth[i], star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero)
+    # Neutron Star
+    elif 8<mass[i]<20:
+        star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero = MS(mass[i], birth[i], star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero)
+    # Black Hole
+    else:
+        star_array, remnant_array, star_array_age, remnant_array_age , star_array_zero, remnant_array_zero = MS(mass[i], birth[i], star_array, remnant_array, star_array_age, remnant_array_age, star_array_zero, remnant_array_zero)
+
+    i+=1
+
+'''Plotting IMF vs Mass'''
+plt.scatter(np.log10(mass), np.log10(imf_array), marker='o', color='g', linewidth=0.1)
+plt.xlabel('Solar Masses [M]')
+plt.ylabel('IMF')
+plt.show()
+
+'''Plotting SFT vs Time'''
+plt.scatter(np.linspace(0, 10, len(mass)), np.random.uniform(1.3, 2.7, len(mass)))
+plt.xlabel('Time [10 Gyrs]')
+plt.ylabel('SFR')
+plt.ylim(-100,100)
+plt.show()
+
+'''Plotting Stellar Remnant vs Mass'''
+#plt.scatter(np.linspace(0,100,len(remnant_array)), remnant_array, color='m')
+#plt.xlabel('Solar Masses [M]')
+#plt.ylabel('Stellar Remnant [M]')
+#plt.show()
+
+print(f'There are {len(remnant_array)} stellar remnant objects \n Yet there are {len(star_array)} stars')
+
+white_FM, white_age, white_zero = white_dwarf(remnant_array, white_array_FM, remnant_array_age, white_array_age, white_array_zero, remnant_array_zero)
+neutron_FM, neutron_age, neutron_zero = neutron_star(remnant_array, neutron_array_FM, remnant_array_age, neutron_array_age, neutron_array_zero, remnant_array_zero)
+black_FM, black_age, black_zero = black_hole(remnant_array, black_array_FM, remnant_array_age, black_array_age, black_array_zero, remnant_array_zero)
+
+print(f'the total number of stars is SM {len(star_array)} and SA {len(star_array_age)} and SZ {len(star_array_zero)}')
+print(f'the total number of white dwarfs is WDM {len(white_FM)} and WDA {len(white_age)} and WDZ {len(white_zero)}')
+print(f'the total number of neutron stars is NSM {len(neutron_FM)} and NSA {len(neutron_age)} and NSZ {len(neutron_zero)}')
+print(f'the total number of black holes is BHM {len(black_FM)} and BMA {len(black_age)} and BHZ {len(black_zero)}')
+
+print(f'The are {(len(star_array)*100)/10**j}% of stars in MS')
+print(f'The are {(len(white_FM)*100)/10**j}% of white dwarfs')
+print(f'The are {(len(neutron_FM)*100)/10**j}% of neutron stars')
+print(f'The are {(len(black_FM)*100)/10**j}% of black holes')
+
+# print(black_zero)
+# print(f'the len of rem is {len(remnant_array)} and for zeros {len(remnant_array_zero)}')
+# print(remnant_array)
+# print('\n')
+# print(remnant_array_zero)
+# print(f'{remnant_array_zero.min()} and {remnant_array_zero.max()}')
+
+# Example arrays to plot
+arrays = {
+    "Main Sequence": star_array, 
+    "White Dwarfs": white_FM,
+    "Neutron Stars": neutron_FM,
+    "Black Holes": black_FM,
+}
+
+# Plotting the normalized histograms for the final mass
+plot_normalized_histogram_mass(arrays)
+
+# Example arrays to plot
+arrays = {
+    "Main Sequence": star_array_age, 
+    "White Dwarfs": white_age,
+    "Neutron Stars": neutron_age,
+    "Black Holes": black_age,
+}
+
+# Plotting the normalized histograms for the final mass
+plot_normalized_histogram_age(arrays)
+
+plt.scatter(mass, star_array_zero, label='Stars')
+plt.scatter(mass, white_zero, label='White Dwarfs')
+plt.scatter(mass, neutron_zero, label='Neutron Stars')
+plt.scatter(mass, black_zero, label='Black Holes')
+plt.legend()
+plt.xlabel('M ZAMS [M]')
+plt.ylabel('M remnant [M]')
+plt.show()
+
+
+
